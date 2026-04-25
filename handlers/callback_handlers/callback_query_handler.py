@@ -1,5 +1,3 @@
-import datetime
-
 from telebot.types import InputMediaPhoto
 from telegram_bot_calendar import DetailedTelegramCalendar, LSTEP
 
@@ -9,6 +7,7 @@ from keyboards.inline import need_photo
 from loader import bot
 from states.find_hotel import InfoHotel
 from states.history_state import History_state
+from utils import date_validator
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func(), state=InfoHotel.checkInDate)
@@ -30,8 +29,11 @@ def cal(callback):
             data['fyear'] = int(result.strftime('%Y'))
             data['fmonth'] = int(result.strftime('%m'))
             data['fday'] = int(result.strftime('%d'))
-        if datetime.datetime.today() <= datetime.datetime(
-                year=data['fyear'], day=data['fday'], month=data['fmonth']):
+        if date_validator.check_in_date_is_valid(
+            year=data['fyear'],
+            month=data['fmonth'],
+            day=data['fday']
+        ):
 
             bot.set_state(callback.message.chat.id, InfoHotel.checkOutDate)
             bot.send_message(callback.message.chat.id,
@@ -67,8 +69,14 @@ def cal(callback):
             data['smonth'] = int(result.strftime('%m'))
             data['sday'] = int(result.strftime('%d'))
         try:
-            if datetime.datetime(year=data['syear'], day=data['sday'], month=data['smonth']) < datetime.datetime(
-                    year=data['fyear'], day=data['fday'], month=data['fmonth']):
+            if not date_validator.check_out_date_is_valid(
+                check_in_year=data['fyear'],
+                check_in_month=data['fmonth'],
+                check_in_day=data['fday'],
+                check_out_year=data['syear'],
+                check_out_month=data['smonth'],
+                check_out_day=data['sday']
+            ):
                 raise Exception("Small")
 
             bot.set_state(callback.message.chat.id, InfoHotel.adults)
